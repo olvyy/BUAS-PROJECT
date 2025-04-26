@@ -222,8 +222,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="enemy.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="game.cpp" />
+    <ClCompile Include="Line.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="Rectangle.cpp" />
     <ClCompile Include="surface.cpp" />
@@ -231,9 +233,13 @@
     <ClCompile Include="tilemap.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bullet.hpp" />
+    <ClInclude Include="bulletPool.hpp" />
     <ClInclude Include="enemy.hpp" />
     <ClInclude Include="entity.hpp" />
     <ClInclude Include="game.h" />
+    <ClInclude Include="Line.hpp" />
+    <ClInclude Include="enemyPool.hpp" />
     <ClInclude Include="player.hpp" />
     <ClInclude Include="Rectangle.hpp" />
     <ClInclude Include="surface.h" />

@@ -1,14 +1,12 @@
 #pragma once
 #include "entity.hpp"
-#include <iostream>
-#include <vector>
+#include "bullet.hpp"
 
 class Player : public Entity
 {
 public:
 	//constructor
 	Player( const Tmpl8::vec2& c_origin,
-			const Tmpl8::vec2& c_size,
 			std::shared_ptr<Tmpl8::Sprite> c_idle,
 			std::shared_ptr<Tmpl8::Sprite> c_moveDown,
 			std::shared_ptr<Tmpl8::Sprite> c_moveUp,
@@ -16,29 +14,35 @@ public:
 			std::shared_ptr<Tmpl8::Sprite> c_moveRight
 		  );
 
-	//updating
-	void HandleInput();
-	void Update(float deltaTime,const Rectangle& playerHitbox, const std::vector<Rectangle>& tiles);
-	void updateAnimation(float deltaTime);
+	int getHearts() { return currentHearts; }
+	int increaseScore() 
+	{ 
+		currentScore+=10;
+		return currentScore;
+	}
+	int decreaseScore()
+	{
+		currentScore -= 20;
+		if (currentScore < 0)
+		{
+			currentScore = 0;
+		}
+		else
+		{
+			return currentScore;
+		}
+	}
+	int getScore() { return currentScore; }
+	void takeDamage(int damage);
+	void drawHearts(Tmpl8::Surface* screen, std::shared_ptr<Tmpl8::Sprite> heartSprite, std::shared_ptr<Tmpl8::Sprite> lastTry, float deltaTime);
+	void resetHearts() { currentHearts = maxHearts = 3; }
 
-	//drawing
-	void drawPlayer(Tmpl8::Surface* screen, float deltaTime);
-	bool hKeyPressed = { false };
-	bool drawHitboxes = { false };
-
-	//public variables
-	Tmpl8::vec2 velocity = { 0,0 };
-	bool movingUp = false;
-	bool movingDown = false;
-	bool movingLeft = false;
-	bool movingRight = false;
-
-	//animation
-	float animationTimer = 0.0f;
-	float animationSpeed = 150.0f;
-	int currentFrame = 0;
+	void Reset();
 
 protected:
-	int newWidth = static_cast<int>(currentSprite->GetWidth() * scaleFactor);
-	int newHeight = static_cast<int>(currentSprite->GetHeight() * scaleFactor);
+	int maxHearts = 3;
+	int currentHearts = 3;
+	int scaleFactor = 3.5;
+	int HeartsGap = 20;
+	int currentScore = 0;
 };

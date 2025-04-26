@@ -53,13 +53,14 @@ public:
 	// Special operations
 	void InitCharset();
 	void SetChar( int c, char* c1, char* c2, char* c3, char* c4, char* c5 );
-	void Centre( char* a_String, int y1, Pixel color );
-	void Print( char* a_String, int x1, int y1, Pixel color );
+	void Centre( char* a_String, int y1, Pixel color, int scale );
+	void Print( char* a_String, int x1, int y1, Pixel color, int scale );
 	void Clear( Pixel a_Color );
 	void Line( float x1, float y1, float x2, float y2, Pixel color );
 	void Plot( int x, int y, Pixel c );
 	void LoadImage( char* a_File );
 	void CopyTo( Surface* a_Dst, int a_X, int a_Y );
+	void DrawScaledSurface(Surface* a_Surface, int a_X, int a_Y, int a_Width, int a_Height);
 	void BlendCopyTo( Surface* a_Dst, int a_X, int a_Y );
 	void ScaleColor( unsigned int a_Scale );
 	void Box( int x1, int y1, int x2, int y2, Pixel color );

@@ -367,6 +367,11 @@ int main( int argc, char **argv )
 		t.reset();
 
 		game->Tick( elapsedTime );
+
+		if (game->shouldQuit)
+		{
+			exitapp = 1;
+		}
 		// event loop
 		SDL_Event event;
 		while (SDL_PollEvent( &event )) 
@@ -401,7 +406,8 @@ int main( int argc, char **argv )
 			}
 		}
 	}
-	game->Shutdown();
+	float deltaTime = 0.0f;
+	game->Shutdown(deltaTime);
 	SDL_Quit();
 	return 0;
 }

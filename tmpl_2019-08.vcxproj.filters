@@ -12,6 +12,8 @@
     <ClCompile Include="player.cpp" />
     <ClCompile Include="Rectangle.cpp" />
     <ClCompile Include="tilemap.cpp" />
+    <ClCompile Include="enemy.cpp" />
+    <ClCompile Include="Line.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h" />
@@ -26,6 +28,10 @@
     <ClInclude Include="Rectangle.hpp" />
     <ClInclude Include="tilemap.hpp" />
     <ClInclude Include="enemy.hpp" />
+    <ClInclude Include="enemyPool.hpp" />
+    <ClInclude Include="Line.hpp" />
+    <ClInclude Include="bullet.hpp" />
+    <ClInclude Include="bulletPool.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="template code">

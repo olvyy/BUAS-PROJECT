@@ -1,15 +1,19 @@
 #include "game.h"
 #include "surface.h"
 #include "template.h"
-#include <SDL.h>
-#include <iostream>
 #include "player.hpp"
-#include <cassert>
 #include "Rectangle.hpp"
 #include "tilemap.hpp"
+#include "enemy.hpp"
 
-std::shared_ptr<Player> player; //global player object
-std::shared_ptr<GameMap> gameMap; //global map object
+#include <cassert>
+#include <SDL.h>
+#include <iostream>
+
+//global variables
+std::shared_ptr<Player> player; 
+std::shared_ptr<GameMap> gameMap; 
+std::shared_ptr<Enemy> enemy;
 
 namespace Tmpl8
 {
@@ -17,21 +21,32 @@ namespace Tmpl8
     //____________________________________________________________________________________________________________________________________
     void Game::Init()
     {
+        //menu
+        menu = new Surface("assets/instructions.png");
+		gameOver = new Surface("assets/gameover.png");
+		tryAgainLight = new Surface("assets/tryagain1.png");
+		tryAgainDark = new Surface("assets/tryagain2.png");
+		quitLight = new Surface("assets/quit1.png");
+		quitDark = new Surface("assets/quit2.png");
+
         //player sprites
         std::shared_ptr<Sprite> idle = std::make_shared<Sprite>(new Surface("assets/player_idle.png"), 4);
         std::shared_ptr<Sprite> moveUp = std::make_shared<Sprite>(new Surface("assets/player_up.png"), 4);
         std::shared_ptr<Sprite> moveDown = std::make_shared<Sprite>(new Surface("assets/player_down.png"), 4);
         std::shared_ptr<Sprite> moveLeft = std::make_shared<Sprite>(new Surface("assets/player_left.png"), 4);
         std::shared_ptr<Sprite> moveRight = std::make_shared<Sprite>(new Surface("assets/player_right.png"), 4);
+		heartSprite = std::make_shared<Sprite>(new Surface("assets/heart.png"), 1);
+		lastTry = std::make_shared<Sprite>(new Surface("assets/lasttry.png"), 1);
+
+        //create map
+        gameMap = std::make_shared<GameMap>();
+        gameMap->LoadMap(gameMap->lvl1);
 
         //create player
-
-		vec2 position((screen->GetWidth() / 2), screen->GetHeight() / 2);
-		vec2 playersize(40.0f, 40.0f);
+        vec2 position(screenCenterX, screenCenterY);
 
         player = std::make_shared<Player>(
             position,
-            playersize,
             idle,
             moveDown,
             moveUp,
@@ -39,31 +54,312 @@ namespace Tmpl8
             moveRight
         );
 
-        gameMap = std::make_shared<GameMap>();
+        activeEntities.push_back(player);
     }
 
     //MAIN GAME TICK FUNCTION_____________________________________________________________________________________________________________
     //____________________________________________________________________________________________________________________________________
     void Game::Tick(float deltaTime)
     {
-        // Clamp to prevent frame time spikes (~30 FPS)
-        deltaTime = Min(deltaTime, 33.33333333f);
+        switch (currentState)
+        {
+        case MENU:
+            UpdateMenu(deltaTime);
+            break;
+        case GAMEPLAY:
+            UpdateGame(deltaTime);
+            break;
+        case GAME_OVER:
+            Shutdown(deltaTime);
+            break;
+        default:
+            break;
+        }
+    }
+    void Game::UpdateMenu(float deltaTime)
+    {
+        int newWidth = (menu->GetWidth() * scaleFactor);
+        int newHeight = (menu->GetHeight() * scaleFactor);
 
+        if (!IsReturnPressed())
+        {
+			menu->DrawScaledSurface(screen, screenCenterX - (newWidth/2) , screenCenterY - (newHeight/2) , newWidth, newHeight);
+        }
+    }
+
+    void Game::UpdateGame(float deltaTime)
+    {
         screen->Clear(0);
+        deltaTime = Min(deltaTime, 33.33333333f);
+        deltaTime *= 0.001f;
+
+		spawnTimer += deltaTime;
 
         //gamemap
-        std::vector<Rectangle> tileHitboxes = gameMap->GetTileHitboxes(); // Get all tile hitboxes
-        //std::cout << "hitboxes: " << tileHitboxes.size() << std::endl;
-
+        tileHitboxes = gameMap->GetTileHitboxes();
+        tiles6 = gameMap->Gettiles6();
         gameMap->DrawMap(screen, 2.5f, deltaTime);
         gameMap->UpdateTileAnimation(deltaTime);
 
         //player
-        player->HandleInput();
-        player->Update(deltaTime, player->GetHitbox(), tileHitboxes);
-        player->drawPlayer(screen, deltaTime);
+        HandleInput(deltaTime);
+        player->Update(deltaTime, tileHitboxes, tiles6, activeEntities, std::static_pointer_cast<Entity>(player), screen);
+        player->Draw(screen, deltaTime);
+        player->drawHearts(screen, heartSprite, lastTry, deltaTime);
+        UpdateScoreDisplay(screen); 
+        
+		//std::cout << player->getHearts() << std::endl;
+
+        //enemies
+        {
+            if (spawnTimer >= spawnDelay)
+            {
+                spawnTimer = 0.0f;
+
+                if (!enemypool.returnVector().empty())
+                {
+                    auto enemy = enemypool.getEnemy();
+
+                    Tmpl8::vec2 spawnPos = spawnTiles[rand() % spawnTiles.size()];
+                    enemy->SetPosition(spawnPos);
+                    enemy->makeActive();
+                    enemyHitboxes.push_back(enemy->GetHitbox());
+                    activeEnemies.push_back(enemy);
+                    return;
+                }
+            }
+
+            if (!activeEnemies.empty())
+            {
+                for (int i = 0; i < activeEnemies.size();)
+                {
+                    auto& enemy = activeEnemies[i];
+
+                    if(!player->getInvincible()) enemy->Update(deltaTime, tileHitboxes, tiles6, activeEnemies, std::static_pointer_cast<Entity>(player), screen);
+
+                    if (enemy->isDying() == true)
+                    {
+						enemy->SetIdle(enemy->deathSprite);
+                        enemy->Draw(screen, deltaTime);
+                        ++i;
+                        continue;
+                    }
+
+                    if (std::static_pointer_cast<Enemy>(enemy)->isActive())
+                    {
+                        enemy->Draw(screen, deltaTime);
+                        
+						if (collide(enemy->GetHitbox(), player->GetHitbox()))
+						{
+							if (!player->getInvincible())
+                            {
+                                if (player->getHearts() > 0)
+                                {
+                                    player->takeDamage(1);
+                                    player->decreaseScore();
+                                    player->makeInvincible();
+                                    return;
+                                }
+								if (player->getHearts() <= 0)
+								{
+									currentState = GAME_OVER;
+								}
+                            }
+                            std::static_pointer_cast<Enemy>(enemy)->Die();
+						}
+
+                        ++i;
+                    }
+                    else if (enemy->readytoPool())
+                    {
+                        enemypool.returnEnemy(std::static_pointer_cast<Enemy>(enemy));
+                        activeEnemies.erase(activeEnemies.begin() + i);
+                    }
+                    else
+                    {
+                        ++i;
+                    }
+                }
+            }
+        }
+
+        //bullets
+        {
+            for (int i = 0; i < activeBullets.size(); )
+            {
+                auto& bullet = activeBullets[i];
+
+                bullet->Update(deltaTime);
+
+                if (bullet->isActive())
+                {
+                    std::cout << "bullet active" << std::endl;
+                    bullet->Draw(screen);
+                    ++i;
+                }
+                else
+                {
+                    bullets.ReturnBullet(bullet);
+                    activeBullets.erase(activeBullets.begin() + i);
+                    std::cout << "bullet deactivated" << std::endl;
+
+                }
+            }
+
+            for (auto& bullet : activeBullets)
+            {
+                if (!bullet->isActive()) continue;
+
+                for (auto& enemy : activeEnemies)
+                {
+                    if (!std::static_pointer_cast<Enemy>(enemy)->isActive()) continue;
+
+                    if (collide(bullet->getHitbox(), enemy->GetHitbox()))
+                    {
+                        std::cout << "bullet,enemy collision" << std::endl;
+                        bullet->Deactivate();
+                        std::static_pointer_cast<Enemy>(enemy)->Die();
+                        player->increaseScore();
+                        break;
+                    }
+                }
+            }
+        }
+
+        //std::cout << player->getVelocity().x << std::endl;
+        //std::cout << player->getVelocity().y << std::endl;
+      
     }
 
-    void Game::Shutdown()
-    {}
-};
+    void Game::ResetGame()
+    {
+        player->Reset();
+        
+        for (auto& enemy : activeEnemies)
+        {
+            std::static_pointer_cast<Enemy>(enemy)->deactivate();
+			enemypool.returnEnemy(std::static_pointer_cast<Enemy>(enemy));
+        }
+        activeEnemies.clear();
+
+        player->resetHearts();
+
+		for (auto& bullet : activeBullets)
+		{
+            bullet->Deactivate();
+			bullets.ReturnBullet(bullet);
+		}
+        activeBullets.clear();
+
+        bulletTimer = 0.0f;
+        spawnTimer = 0.0f;
+
+		vec2 resetPosition(screenCenterX, screenCenterY);
+        player->setPosition(resetPosition);
+    }
+
+    void Game::Shutdown(float deltaTime)
+	{
+        screen->Clear(0);
+        HandleInput(deltaTime);
+
+		int gameOverWidth = (gameOver->GetWidth() * scaleFactor);
+		int gameOverHeight = (gameOver->GetHeight() * scaleFactor);
+
+		int tryAgainWidth = (tryAgainDark->GetWidth() * scaleFactor);
+		int tryAgainHeight = (tryAgainDark->GetHeight() * scaleFactor);
+
+		int quitWidth = (quitLight->GetWidth() * scaleFactor);
+		int quitHeight = (quitLight->GetHeight() * scaleFactor);
+
+		gameOver->DrawScaledSurface(screen, screenCenterX - (gameOverWidth / 2), screenCenterY - (gameOverWidth / 2), gameOverWidth, gameOverHeight);
+		ShowFinalScore(screen);
+
+        if (currentOption == TRYAGAIN)
+        {
+			tryAgainDark->DrawScaledSurface(screen, screenCenterX - (tryAgainWidth / 2), screenCenterY + 100 - (tryAgainHeight / 2), tryAgainWidth, tryAgainHeight);
+			quitLight->DrawScaledSurface(screen, screenCenterX - (quitWidth / 2), screenCenterY + 150 - (quitHeight / 2), quitWidth, quitHeight);
+
+            IsReturnPressed();
+        }
+        else
+        {
+            tryAgainLight->DrawScaledSurface(screen, screenCenterX - (tryAgainWidth / 2), screenCenterY + 100 - (tryAgainHeight / 2), tryAgainWidth, tryAgainHeight);
+            quitDark->DrawScaledSurface(screen, screenCenterX - (quitWidth / 2), screenCenterY + 150 - (quitHeight / 2), quitWidth, quitHeight);
+
+            IsReturnPressed();
+        }
+    }
+
+    /////////////////////////////////////////////////
+    /////			INPUT HANDLING			////////
+    ///////////////////////////////////////////////
+
+    void Game::HandleInput(float deltaTime)
+    {
+        // get the current keyboard state
+        const Uint8* keystates = SDL_GetKeyboardState(nullptr);
+        direction = { 0,0 };
+
+        if (currentState == GAME_OVER)
+        {
+            if (keystates[SDL_SCANCODE_W])
+            {
+				currentOption = TRYAGAIN;
+            }
+            else if (keystates[SDL_SCANCODE_S])
+            {
+                currentOption = QUIT;
+            }
+        }
+
+        if (currentState == GAMEPLAY)
+        {
+            //moving
+            player->movingUp = keystates[SDL_SCANCODE_W];
+
+            player->movingDown = keystates[SDL_SCANCODE_S];
+
+            player->movingLeft = keystates[SDL_SCANCODE_A];
+
+            player->movingRight = keystates[SDL_SCANCODE_D];
+
+            //shooting (only if not invincible) 
+            if(!player->getInvincible())
+            {
+                if (keystates[SDL_SCANCODE_UP]) direction.y = -1;
+                if (keystates[SDL_SCANCODE_DOWN]) direction.y = 1;
+                if (keystates[SDL_SCANCODE_LEFT]) direction.x = -1;
+                if (keystates[SDL_SCANCODE_RIGHT]) direction.x = 1;
+
+                if (direction.x != 0 || direction.y != 0)
+                {
+                    direction = direction.normalize(direction);
+                    bulletTimer += deltaTime;
+
+                    if (bulletTimer >= bulletCooldown)
+                    {
+                        auto bullet = bullets.GetBullet();
+                        bullet->Activate(player->GetHitbox().Center(), direction);
+                        activeBullets.push_back(bullet);
+                        bulletTimer = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    void Game::UpdateScoreDisplay(Surface* screen)  
+    {  
+       std::string scoreString = "SCORE: " + std::to_string(player->getScore());
+       char* scoreCStr = const_cast<char*>(scoreString.c_str()); //converts C++ strings into C-style strings, creating a character array (char*) with the same data
+       screen->Print(scoreCStr, 400, 40, 0xFFFFFFF, 1);
+    }
+
+    void Game::ShowFinalScore(Surface* screen)
+    {
+       std::string scoreString = "SCORE: " + std::to_string(player->getScore());
+       char* scoreCStr = const_cast<char*>(scoreString.c_str()); //converts C++ strings into C-style strings, creating a character array (char*) with the same data
+       screen->Print(scoreCStr, 400, 500, 0xFFFFFFF, 1);
+    }
+}

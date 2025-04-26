@@ -95,10 +95,40 @@ public:
 	float& operator [] ( const int idx ) { return cell[idx]; }
 	float length() { return sqrtf( x * x + y * y ); }
 	float sqrLentgh() { return x * x + y * y; }
-	vec2 normalized() { float r = 1.0f / length(); return vec2( x * r, y * r ); }
-	void normalize() { float r = 1.0f / length(); x *= r; y *= r; }
+	vec2 normalized() 
+	{
+		float r = 1.0f / length(); return vec2( x * r, y * r ); 
+	}
+	void normalize() 
+	{ 
+		float len = length();
+		if (len > 0.0f)
+		{
+			float r = 1.0f / len;
+			x *= r;
+			y *= r;
+		}
+		else
+		{
+			x = 0.0f;
+			y = 0.0f;
+		}
+	}
+	Tmpl8::vec2 Tmpl8::vec2::Truncate(Tmpl8::vec2& v, float max)
+	{
+		float len = v.length();
+		if (len > max && len > 0.0f)
+		{
+			return v.normalized() * max;
+		}
+		return v;
+	}
 	static vec2 normalize( vec2 v ) { return v.normalized(); }
 	float dot( const vec2& operand ) const { return x * operand.x + y * operand.y; }
+	static float distance(const vec2& a, const vec2& b)
+	{
+		return (a - b).length();
+	}
 };
 
 class vec3

@@ -2,26 +2,10 @@
 
 #include "tilemap.hpp"
 #include "surface.h"
+#include "SDL.h"
 
-//might want to implement multiple levels at some point
-int lvl1[16][16] = {
-	{5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,5},
-	{5,5,5,2,2,2,2,2,2,2,2,2,2,5,5,5},
-	{5,2,3,3,3,3,3,3,3,3,3,3,3,3,5,5},
-	{5,2,3,3,3,3,3,3,3,3,3,3,3,3,2,5},
-	{5,2,3,3,3,3,3,4,6,3,3,3,3,3,2,5},
-	{5,2,3,3,3,4,3,3,4,3,3,3,3,3,2,5},
-	{5,2,3,3,3,3,4,3,3,3,3,3,3,3,2,0},
-	{0,2,3,3,6,3,3,3,3,3,3,3,6,3,2,0},
-	{0,2,3,3,3,3,3,3,3,3,3,4,3,3,2,0},
-	{0,2,3,3,4,3,3,3,3,3,3,3,3,3,2,5},
-	{5,2,3,3,3,3,3,3,3,3,3,3,3,3,2,5},
-	{5,2,3,3,3,3,3,3,3,3,3,3,3,3,2,5},
-	{5,2,3,3,3,3,3,3,6,3,3,3,3,4,2,5},
-	{5,5,3,3,4,3,3,3,3,3,3,3,3,3,5,5},
-	{5,5,5,2,2,2,2,2,2,2,2,2,2,5,5,5},
-	{5,5,5,5,5,5,5,0,0,0,5,5,5,5,5,5}
-};
+#include <random>
+#include <iostream>
 
 GameMap::GameMap()
 {
@@ -43,7 +27,7 @@ void GameMap::LoadMap(int arr[16][16])
 {
 	for (int row = 0; row < 16; row++)
 	{
-		for (int column = 0;column < 16; column++)
+		for (int column = 0; column < 16; column++)
 		{
 			map[row][column] = arr[row][column];
 		}
@@ -69,8 +53,6 @@ void GameMap::DrawMap(Tmpl8::Surface* screen, float scaleFactor, float deltaTime
 		hKeyPressed = false;
 	}
 
-	const int tileSize = 16;
-
 	float mapWdith = 16 * tileSize * scaleFactor;
 	float mapHeight = 16 * tileSize * scaleFactor;
 
@@ -78,6 +60,7 @@ void GameMap::DrawMap(Tmpl8::Surface* screen, float scaleFactor, float deltaTime
 	float Yoffset = ((screen->GetHeight() - mapHeight) / 2);
 
 	tileHitboxes.clear();
+	tileHitboxes6.clear();
 
 	for (int row = 0; row < 16; row++)
 	{
@@ -88,15 +71,17 @@ void GameMap::DrawMap(Tmpl8::Surface* screen, float scaleFactor, float deltaTime
 			dest.origin = { Xoffset + static_cast<float>(column * tileSize * scaleFactor), Yoffset + static_cast<float>(row * tileSize * scaleFactor) };
 			dest.size = { static_cast<float>(tileSize * scaleFactor), static_cast<float>(tileSize * scaleFactor) };
 
-
 			switch (tileID)
 			{
 			case 0:
+			{
 				tile0->DrawScaled(static_cast<int>(dest.origin.x), static_cast<int>(dest.origin.y), static_cast<int>(dest.size.x), static_cast<int>(dest.size.y), screen);
 				break;
+			}
 			case 1:
 				tile1->DrawScaled(static_cast<int>(dest.origin.x), static_cast<int>(dest.origin.y), static_cast<int>(dest.size.x), static_cast<int>(dest.size.y), screen);
 				break;
+
 			case 2:
 				tile2->DrawScaled(static_cast<int>(dest.origin.x), static_cast<int>(dest.origin.y), static_cast<int>(dest.size.x), static_cast<int>(dest.size.y), screen);
 				break;
@@ -122,6 +107,7 @@ void GameMap::DrawMap(Tmpl8::Surface* screen, float scaleFactor, float deltaTime
 			{
 				tile6->DrawScaled(static_cast<int>(dest.origin.x), static_cast<int>(dest.origin.y), static_cast<int>(dest.size.x), static_cast<int>(dest.size.y), screen);
 				tileHitboxes.emplace_back(dest.origin, dest.size);
+				tileHitboxes6.emplace_back(dest.origin, dest.size);
 				if (drawHitboxes)
 				{
 					DrawRectangle(tileHitboxes.back(), screen, 0x0000FF);

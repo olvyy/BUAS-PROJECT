@@ -90,29 +90,53 @@ void Surface::Clear( Pixel a_Color )
 	for ( int i = 0; i < s; i++ ) m_Buffer[i] = a_Color;
 }
 
-void Surface::Centre( char* a_String, int y1, Pixel color )
+void Surface::Centre( char* a_String, int y1, Pixel color, int scale )
 {
 	int x = (m_Width - (int)strlen( a_String ) * 6) / 2;
-	Print( a_String, x, y1, color );
+	Print( a_String, x, y1, color, scale );
 }
 
-void Surface::Print( char* a_String, int x1, int y1, Pixel color )
+void Surface::Print( char* a_String, int x1, int y1, Pixel color, int scale )
 {
 	if (!fontInitialized) 
 	{
 		InitCharset();
 		fontInitialized = true;
 	}
+
 	Pixel* t = m_Buffer + x1 + y1 * m_Pitch;
-	for ( int i = 0; i < (int)(strlen( a_String )); i++, t += 6 )
+	for ( int i = 0; i < (int)(strlen( a_String )); i++, t += 6 * scale ) //spacing
 	{	
 		long pos = 0;
-		if ((a_String[i] >= 'A') && (a_String[i] <= 'Z')) pos = s_Transl[(unsigned short)(a_String[i] - ('A' - 'a'))];
-													 else pos = s_Transl[(unsigned short)a_String[i]];
+		if ((a_String[i] >= 'A') && (a_String[i] <= 'Z')) 
+		{
+			pos = s_Transl[(unsigned short)(a_String[i] - ('A' - 'a'))];
+		}
+		else
+		{
+			pos = s_Transl[(unsigned short)a_String[i]];
+		}
+
 		Pixel* a = t;
 		char* c = (char*)s_Font[pos];
-		for ( int v = 0; v < 5; v++, c++, a += m_Pitch ) 
-			for ( int h = 0; h < 5; h++ ) if (*c++ == 'o') *(a + h) = color, *(a + h + m_Pitch) = 0;
+
+		for (int v = 0; v < 5; v++, c++, a += m_Pitch)
+		{
+			for (int h = 0; h < 5; h++)
+			{
+				if (*c++ == 'o')
+				{
+					for (int sy = 0; sy < scale; sy++)
+					{
+						for (int sx = 0; sx < scale; sx++)
+						{
+							*(a + h * scale + sx + sy * m_Pitch ) = color, 
+							*(a + h + m_Pitch) = 0;
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -233,6 +257,19 @@ void Surface::CopyTo( Surface* a_Dst, int a_X, int a_Y )
 				src += srcpitch;
 			}
 		}
+	}
+}
+
+//stole this from the Sprite class
+void Surface::DrawScaledSurface(Surface* a_Surface, int a_X, int a_Y, int a_Width, int a_Height)
+{
+	if ((a_Width == 0) || (a_Height == 0)) return;
+	for (int x = 0; x < a_Width; x++) for (int y = 0; y < a_Height; y++)
+	{
+		int u = (int)((float)x * ((float)m_Width / (float)a_Width));
+		int v = (int)((float)y * ((float)m_Height / (float)a_Height));
+		Pixel color = GetBuffer()[u + v * m_Pitch];
+		if (color & 0xffffff) a_Surface->GetBuffer()[a_X + x + ((a_Y + y) * a_Surface->GetPitch())] = color;
 	}
 }
 
@@ -438,6 +475,27 @@ void Sprite::DrawScaled( int a_X, int a_Y, int a_Width, int a_Height, Surface* a
 void Sprite::DrawScaledAnimated(Surface* a_Target, int a_X, int a_Y, int a_Width, int a_Height)
 {
 	if ((a_Width == 0) || (a_Height == 0)) return;
+
+	//skip certain frames to create a flashing effect
+    if (m_Flags & FLASH)  
+    {  
+		static int flashCounter = 0;  
+		static bool flashToggle = false;  
+
+		if (flashCounter == 0)  
+		{  
+			flashToggle = !flashToggle;  
+		}  
+
+		flashCounter = (flashCounter + 1) % 15;
+
+		if (flashToggle)  
+		{  
+			SetFlags(0);  
+			return;  
+		}  
+    }
+
 	for (int x = 0; x < a_Width; x++) for (int y = 0; y < a_Height; y++)
 	{
 		int u = (int)((float)x * ((float)m_Width / (float)a_Width));
