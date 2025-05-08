@@ -27,8 +27,8 @@ void Player::drawHearts(Tmpl8::Surface* screen, std::shared_ptr<Tmpl8::Sprite> h
 	int heartWidth = heartSprite->GetWidth() * scaleFactor;
 	int heartHeight = heartSprite->GetHeight() * scaleFactor;
 
-	int lastTryWidth = lastTry->GetWidth() * scaleFactor;
-	int lastTryHeight = lastTry->GetHeight() * scaleFactor;
+	int lastTryWidth = lastTry->GetWidth() * scaleFactor * 1.5;
+	int lastTryHeight = lastTry->GetHeight() * scaleFactor * 1.5;
 
 	int totalWidth = (currentHearts * heartWidth) + ((currentHearts - 1) * HeartsGap);
 	int startX = (screen->GetWidth() - totalWidth) / 2 + heartWidth / 2;

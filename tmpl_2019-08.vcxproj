@@ -225,6 +225,7 @@
     <ClCompile Include="enemy.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="game.cpp" />
+    <ClCompile Include="Item.cpp" />
     <ClCompile Include="Line.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="Rectangle.cpp" />
@@ -238,6 +239,8 @@
     <ClInclude Include="enemy.hpp" />
     <ClInclude Include="entity.hpp" />
     <ClInclude Include="game.h" />
+    <ClInclude Include="Item.hpp" />
+    <ClInclude Include="itemPool.hpp" />
     <ClInclude Include="Line.hpp" />
     <ClInclude Include="enemyPool.hpp" />
     <ClInclude Include="player.hpp" />

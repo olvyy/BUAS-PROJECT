@@ -90,48 +90,57 @@ void Surface::Clear( Pixel a_Color )
 	for ( int i = 0; i < s; i++ ) m_Buffer[i] = a_Color;
 }
 
-void Surface::Centre( char* a_String, int y1, Pixel color, int scale )
+void Surface::Centre( char* a_String, int y1, int xscale, int yscale, Pixel color )
 {
-	int x = (m_Width - (int)strlen( a_String ) * 6) / 2;
-	Print( a_String, x, y1, color, scale );
+	int x = (m_Width * xscale - (int)strlen( a_String ) * 6 * xscale) / 2;
+	PrintScaled( a_String, x, y1, xscale, yscale, color );
 }
 
-void Surface::Print( char* a_String, int x1, int y1, Pixel color, int scale )
+void Surface::Print( char* a_String, int x1, int y1, Pixel color )
 {
 	if (!fontInitialized) 
 	{
 		InitCharset();
 		fontInitialized = true;
 	}
-
 	Pixel* t = m_Buffer + x1 + y1 * m_Pitch;
-	for ( int i = 0; i < (int)(strlen( a_String )); i++, t += 6 * scale ) //spacing
+	for ( int i = 0; i < (int)(strlen( a_String )); i++, t += 6 )
 	{	
 		long pos = 0;
-		if ((a_String[i] >= 'A') && (a_String[i] <= 'Z')) 
-		{
-			pos = s_Transl[(unsigned short)(a_String[i] - ('A' - 'a'))];
-		}
-		else
-		{
-			pos = s_Transl[(unsigned short)a_String[i]];
-		}
-
+		if ((a_String[i] >= 'A') && (a_String[i] <= 'Z')) pos = s_Transl[(unsigned short)(a_String[i] - ('A' - 'a'))];
+													 else pos = s_Transl[(unsigned short)a_String[i]];
 		Pixel* a = t;
 		char* c = (char*)s_Font[pos];
+		for ( int v = 0; v < 5; v++, c++, a += m_Pitch ) 
+			for ( int h = 0; h < 5; h++ ) if (*c++ == 'o') *(a + h) = color, *(a + h + m_Pitch) = 0;
+	}
+}
 
-		for (int v = 0; v < 5; v++, c++, a += m_Pitch)
+void Surface::PrintScaled(char* a_String, int x1, int y1, int xscale, int yscale, Pixel color)
+{
+	if (!fontInitialized)
+	{
+		InitCharset();
+		fontInitialized = true;
+	}
+	Pixel* t = m_Buffer + x1 + y1 * m_Pitch; // t is the pixel to begin with
+	for (int i = 0; i < (int)(strlen(a_String)); i++, t += (6 * xscale)) // go to the next letter and move to the right
+	{
+		long pos = 0;
+		if ((a_String[i] >= 'A') && (a_String[i] <= 'Z')) pos = s_Transl[(unsigned short)(a_String[i] - ('A' - 'a'))];
+		else pos = s_Transl[(unsigned short)a_String[i]];
+		Pixel* a = t;
+		char* c = (char*)s_Font[pos];
+		for (int v = 0; v < 5 * xscale; v += xscale, c += 1, a += m_Pitch * yscale)
 		{
-			for (int h = 0; h < 5; h++)
+			for (int h = 0; h < 5 * xscale; h += xscale)
 			{
 				if (*c++ == 'o')
 				{
-					for (int sy = 0; sy < scale; sy++)
+					for (int x = 0; x < yscale; x++)
 					{
-						for (int sx = 0; sx < scale; sx++)
-						{
-							*(a + h * scale + sx + sy * m_Pitch ) = color, 
-							*(a + h + m_Pitch) = 0;
+						for (int y = 0; y < xscale; y++) {
+							*(a + h + y + m_Pitch * x) = color;
 						}
 					}
 				}

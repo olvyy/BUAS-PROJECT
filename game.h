@@ -7,6 +7,7 @@
 #include "SDL.h"
 #include "enemyPool.hpp"
 #include "bulletPool.hpp"
+#include "itemPool.hpp"
 
 namespace Tmpl8 {
 
@@ -79,6 +80,8 @@ public:
 
 	void HandleInput(float deltaTime);
 
+	void shootInAllDirections(float deltaTime);
+
 protected:
 	//game state
     GameState currentState = { MENU };   
@@ -92,6 +95,7 @@ protected:
 
 	//game
 	Surface* screen;
+	Surface* frame;
 	int scaleFactor = 5;
 	int screenCenterX = 400;
 	int screenCenterY = 400;
@@ -103,13 +107,33 @@ protected:
 	Tmpl8::vec2 direction = { 0,0 };
 	std::shared_ptr<Tmpl8::Sprite> heartSprite;
 	std::shared_ptr<Tmpl8::Sprite> lastTry;
-	
+
+	//item
+	std::vector<std::shared_ptr<Tmpl8::Sprite>> itemSprites;
+	itemPool items = itemPool(10);
+	std::vector<std::shared_ptr<Item>> activeItems;
+	std::shared_ptr<Item> ItemInUse;
+	float effectTimer = 0.0f;
+	float effectDuration = 10.0f;
+		 
+	int dropChance = 20.0f;
+	int GenerateRandomNumber100() 
+	{
+		return rand() % 100 + 1;
+	}
+		
 	//bullets
 	float bulletTimer = 0.0f;
-	const float bulletCooldown = 0.2f;
+	float bulletCooldown = 0.2f;
+	bool allDirectionalShooting = false;
 	std::shared_ptr<Sprite> bulletSprite = std::make_shared<Sprite>(new Surface("assets/bullet.png"), 1);
 	std::vector <std::shared_ptr<bullet>> activeBullets;
-	BulletPool bullets = BulletPool(20, bulletSprite);
+	BulletPool bullets = BulletPool(30, bulletSprite);
+	std::vector<vec2> directions =
+	{
+		{0, -1}, {1, -1}, {1, 0}, {1, 1},
+		{0, 1}, {-1, 1}, {-1, 0}, {-1, -1}
+	};
 
 	//tilemap
 	std::vector<Rectangle> tileHitboxes; 
@@ -119,8 +143,9 @@ protected:
 	std::vector<std::shared_ptr<Entity>> activeEntities;
 	std::vector<std::shared_ptr<Entity>> activeEnemies;
 	std::vector<Rectangle> enemyHitboxes;
-	objectPool enemypool = { 3 };
-	const float spawnDelay = 1.0f;
+	objectPool enemypool = { 10 };
+	float spawnDelay = 1.5f;
+	const float minSpawnDelay = 0.3f;
 	float spawnTimer = 0.0f;
 
 	std::vector<Tmpl8::vec2> spawnTiles =

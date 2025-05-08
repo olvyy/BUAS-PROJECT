@@ -69,7 +69,7 @@ void Entity::Update(float deltaTime,
 		Tmpl8::vec2 avoidForce = CalculateAvoidance(tiles6, screen, isAvoiding);
 
 		// Always calculate seek force
-		Tmpl8::vec2 seekForce = (player->position - position).normalized() * MAX_SPEED;
+		Tmpl8::vec2 seekForce = (player->position - position).normalized() * maxSpeed;
 
 		// Blend forces dynamically
 		Tmpl8::vec2 steering;
@@ -85,7 +85,7 @@ void Entity::Update(float deltaTime,
 		}
 
 		// Update velocity and clamp to max speed
-		velocity = velocity.Truncate(velocity + steering, MAX_SPEED);
+		velocity = velocity.Truncate(velocity + steering, maxSpeed);
 
 		//screen->Line(position.x, position.y, velocity.x + position.x, velocity.y + position.y, 0xff0000);
 	}
@@ -114,25 +114,25 @@ void Entity::Update(float deltaTime,
 
 			if (movingUp)
 			{
-				velocity.y = -MAX_SPEED;
+				velocity.y = -maxSpeed;
 				currentSprite = moveUp;
 				//std::cout << "player velocity: " << velocity.y << std::endl;
 			}
 			else if (movingDown)
 			{
-				velocity.y = +MAX_SPEED;
+				velocity.y = +maxSpeed;
 				currentSprite = moveDown;
 				//std::cout << "player velocity: "<< velocity.y << std::endl;
 			}
 			if (movingLeft)
 			{
-				velocity.x = -MAX_SPEED;
+				velocity.x = -maxSpeed;
 				currentSprite = moveLeft;
 				//std::cout << "player velocity: " << velocity.x << std::endl;
 			}
 			else if (movingRight)
 			{
-				velocity.x = +MAX_SPEED;
+				velocity.x = +maxSpeed;
 				currentSprite = moveRight;
 				//std::cout << "player velocity: " << velocity.x << std::endl;
 			}

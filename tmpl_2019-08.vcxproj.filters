@@ -14,6 +14,7 @@
     <ClCompile Include="tilemap.cpp" />
     <ClCompile Include="enemy.cpp" />
     <ClCompile Include="Line.cpp" />
+    <ClCompile Include="Item.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h" />
@@ -32,6 +33,8 @@
     <ClInclude Include="Line.hpp" />
     <ClInclude Include="bullet.hpp" />
     <ClInclude Include="bulletPool.hpp" />
+    <ClInclude Include="Item.hpp" />
+    <ClInclude Include="itemPool.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="template code">

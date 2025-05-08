@@ -5,10 +5,16 @@
 #include "Rectangle.hpp"
 #include "tilemap.hpp"
 #include "enemy.hpp"
+#include "item.hpp"
 
 #include <cassert>
 #include <SDL.h>
 #include <iostream>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
 
 //global variables
 std::shared_ptr<Player> player; 
@@ -28,6 +34,13 @@ namespace Tmpl8
 		tryAgainDark = new Surface("assets/tryagain2.png");
 		quitLight = new Surface("assets/quit1.png");
 		quitDark = new Surface("assets/quit2.png");
+
+        //items
+        frame = new Surface("assets/frame.png");
+        itemSprites.push_back(std::make_shared<Tmpl8::Sprite>(new Tmpl8::Surface("assets/coffee.png"), 1)); //0
+        itemSprites.push_back(std::make_shared<Tmpl8::Sprite>(new Tmpl8::Surface("assets/fireRate.png"), 1)); //1
+        itemSprites.push_back(std::make_shared<Tmpl8::Sprite>(new Tmpl8::Surface("assets/allDirectionalShooting.png"), 1)); //2
+        itemSprites.push_back(std::make_shared<Tmpl8::Sprite>(new Tmpl8::Surface("assets/heartItem.png"), 1)); //3
 
         //player sprites
         std::shared_ptr<Sprite> idle = std::make_shared<Sprite>(new Surface("assets/player_idle.png"), 4);
@@ -55,6 +68,9 @@ namespace Tmpl8
         );
 
         activeEntities.push_back(player);
+
+        //seed rand
+        srand(time(NULL));
     }
 
     //MAIN GAME TICK FUNCTION_____________________________________________________________________________________________________________
@@ -94,12 +110,18 @@ namespace Tmpl8
         deltaTime *= 0.001f;
 
 		spawnTimer += deltaTime;
+		if (spawnDelay >= minSpawnDelay)
+		{
+			spawnDelay -= deltaTime * 0.01f;
+			//std::cout << spawnDelay << std::endl;
+		}
 
         //gamemap
         tileHitboxes = gameMap->GetTileHitboxes();
         tiles6 = gameMap->Gettiles6();
         gameMap->DrawMap(screen, 2.5f, deltaTime);
         gameMap->UpdateTileAnimation(deltaTime);
+		frame->DrawScaledSurface(screen, 15, 80, frame->GetWidth() * 2.5f, frame->GetHeight() * 2.5f);
 
         //player
         HandleInput(deltaTime);
@@ -121,8 +143,8 @@ namespace Tmpl8
                     auto enemy = enemypool.getEnemy();
 
                     Tmpl8::vec2 spawnPos = spawnTiles[rand() % spawnTiles.size()];
-                    enemy->SetPosition(spawnPos);
                     enemy->makeActive();
+                    enemy->setPosition(spawnPos);
                     enemyHitboxes.push_back(enemy->GetHitbox());
                     activeEnemies.push_back(enemy);
                     return;
@@ -193,7 +215,7 @@ namespace Tmpl8
 
                 if (bullet->isActive())
                 {
-                    std::cout << "bullet active" << std::endl;
+                    //std::cout << "bullet active" << std::endl;
                     bullet->Draw(screen);
                     ++i;
                 }
@@ -201,27 +223,87 @@ namespace Tmpl8
                 {
                     bullets.ReturnBullet(bullet);
                     activeBullets.erase(activeBullets.begin() + i);
-                    std::cout << "bullet deactivated" << std::endl;
+                   // std::cout << "bullet deactivated" << std::endl;
 
                 }
             }
 
+            //item
             for (auto& bullet : activeBullets)
             {
                 if (!bullet->isActive()) continue;
 
-                for (auto& enemy : activeEnemies)
+               for (auto& tile : tileHitboxes)
+               {
+				    if (collide(bullet->getHitbox(), tile))
+				    {
+					    bullet->Deactivate();
+				    }
+               }
+
+                for (auto& enemy : activeEnemies) 
                 {
                     if (!std::static_pointer_cast<Enemy>(enemy)->isActive()) continue;
 
                     if (collide(bullet->getHitbox(), enemy->GetHitbox()))
                     {
-                        std::cout << "bullet,enemy collision" << std::endl;
                         bullet->Deactivate();
                         std::static_pointer_cast<Enemy>(enemy)->Die();
                         player->increaseScore();
-                        break;
+
+						if (GenerateRandomNumber100() <= dropChance)
+						{
+                            if(!itemSprites.empty() && activeItems.size() < 2)
+                            {
+                                int randomIndex;
+
+                                if (player->getHearts() == 3)
+								{
+									randomIndex = rand() % (itemSprites.size() - 1);
+								}
+								else if (player->getHearts() < 3)
+								{
+									randomIndex = rand() % itemSprites.size(); 
+                                }
+                                
+                                auto item = items.getItem();
+                                item->setSprite(itemSprites[randomIndex]);
+                                item->setItemType(randomIndex);
+                                item->Activate();
+                                item->setPosition(enemy->getPosition());
+                                activeItems.push_back(item);
+                            }
+						}
                     }
+                }
+            }
+        }
+
+        for (auto& item : activeItems)
+        {
+			if (!activeItems.empty()) item->Draw(screen, item->getSprite());
+        }
+
+        for (auto& item : activeItems)
+        {
+            if (collide(player->GetHitbox(), item->getHitbox()))
+            {
+                if (item->getType() == Item::Type::HEART)
+                {
+                    player->increaseHearts(1);
+                    item->Deactivate();
+                    items.returnItem(item);
+                    activeItems.erase(activeItems.begin());
+                }
+                else if (!player->boolCollected())
+                {
+                    player->setCollected(true);
+                    item->setPosition(Tmpl8::vec2(22.5, 87.5));
+                    Game::ItemInUse = item;
+                }
+                else
+                {
+                    screen->Centre("ITEM IN USE", 400, 3, 3, 0xFF0000);
                 }
             }
         }
@@ -251,11 +333,25 @@ namespace Tmpl8
 		}
         activeBullets.clear();
 
+		for (auto& item : activeItems)
+		{
+            item->Deactivate();
+			items.returnItem(item);
+		}
+        activeItems.clear();
+		ItemInUse = nullptr;
+		player->setCollected(false);
+        player->resetSpeed();
+		allDirectionalShooting = false;
+		bulletCooldown = 0.2f;
+
+        effectTimer = 0.0f;
         bulletTimer = 0.0f;
         spawnTimer = 0.0f;
 
 		vec2 resetPosition(screenCenterX, screenCenterY);
         player->setPosition(resetPosition);
+		spawnDelay = 1.5f;
     }
 
     void Game::Shutdown(float deltaTime)
@@ -327,22 +423,120 @@ namespace Tmpl8
             //shooting (only if not invincible) 
             if(!player->getInvincible())
             {
-                if (keystates[SDL_SCANCODE_UP]) direction.y = -1;
-                if (keystates[SDL_SCANCODE_DOWN]) direction.y = 1;
-                if (keystates[SDL_SCANCODE_LEFT]) direction.x = -1;
-                if (keystates[SDL_SCANCODE_RIGHT]) direction.x = 1;
-
-                if (direction.x != 0 || direction.y != 0)
+                if(!allDirectionalShooting)
                 {
-                    direction = direction.normalize(direction);
-                    bulletTimer += deltaTime;
-
-                    if (bulletTimer >= bulletCooldown)
+                    if (keystates[SDL_SCANCODE_UP]) direction.y = -1;
+                    if (keystates[SDL_SCANCODE_DOWN]) direction.y = 1;
+                    if (keystates[SDL_SCANCODE_LEFT]) direction.x = -1;
+                    if (keystates[SDL_SCANCODE_RIGHT]) direction.x = 1;
+                
+                    if (direction.x != 0 || direction.y != 0)
                     {
-                        auto bullet = bullets.GetBullet();
-                        bullet->Activate(player->GetHitbox().Center(), direction);
-                        activeBullets.push_back(bullet);
-                        bulletTimer = 0;
+                        direction = direction.normalize(direction);
+                        bulletTimer += deltaTime;
+
+                        if (bulletTimer >= bulletCooldown)
+                        {
+                            auto bullet = bullets.GetBullet();
+                            bullet->Activate(player->GetHitbox().Center(), direction);
+                            activeBullets.push_back(bullet);
+                            bulletTimer = 0;
+                        }
+                    }
+                }
+                else
+                {
+                    for (auto& dir : directions)
+                    {
+                        direction = dir.normalize(dir);
+                        bulletTimer += deltaTime;
+
+                        if(bulletTimer >= bulletCooldown)
+                        {
+                            auto bullet = bullets.GetBullet();
+                            bullet->Activate(player->GetHitbox().Center(), direction);
+                            activeBullets.push_back(bullet);
+                            bulletTimer = 0;
+                        }
+                    }
+                }
+            }
+                
+            
+            if (Game::ItemInUse)
+            {
+                if (player->boolCollected())
+                {
+                    switch (ItemInUse->getType())
+                    {
+                    case Item::Type::SPEED_UP:
+                    {
+                        effectTimer += deltaTime;
+                        if (effectTimer <= effectDuration)
+                        {
+                            std::cout << effectTimer << std::endl;
+                            player->increaseSpeed();
+                        }
+                        else
+                        {
+                            ItemInUse->Deactivate();
+                            items.returnItem(ItemInUse);  
+							activeItems.erase(std::remove(activeItems.begin(), activeItems.end(), ItemInUse), activeItems.end());
+                            ItemInUse = nullptr;
+
+                            player->setCollected(false);
+                            player->resetSpeed();
+                            effectTimer = 0.0f;
+                        }
+                    }
+                    break;
+                    case Item::Type::FIRE_RATE:
+                    {
+                        effectTimer += deltaTime;
+
+                        if (effectTimer <= effectDuration)
+                        {
+                            std::cout << effectTimer << std::endl;
+                            bulletCooldown = 0.05f;
+                        }
+                        else
+                        {
+                            ItemInUse->Deactivate();
+                            items.returnItem(ItemInUse);
+                            activeItems.erase(std::remove(activeItems.begin(), activeItems.end(), ItemInUse), activeItems.end());
+                            ItemInUse = nullptr;
+
+                            player->setCollected(false);
+                            bulletCooldown = 0.2f;
+                            effectTimer = 0.0f;
+                        }
+                    }
+                    break;
+                    case Item::Type::ALL_DIRECTIONAL_SHOOTING:
+                    {
+                        effectTimer += deltaTime;
+
+                        if (effectTimer <= effectDuration)
+                        {
+                            std::cout << effectTimer << std::endl;
+                            allDirectionalShooting = true;
+                        }
+                        else
+                        {
+                            ItemInUse->Deactivate();
+                            items.returnItem(ItemInUse);
+                            activeItems.erase(std::remove(activeItems.begin(), activeItems.end(), ItemInUse), activeItems.end());
+                            ItemInUse = nullptr;
+
+                            player->setCollected(false);
+                            effectTimer = 0.0f;
+                            allDirectionalShooting = false;
+                        }
+                    }
+                    break;
+                    default:
+                        break;
+
                     }
                 }
             }
@@ -353,13 +547,15 @@ namespace Tmpl8
     {  
        std::string scoreString = "SCORE: " + std::to_string(player->getScore());
        char* scoreCStr = const_cast<char*>(scoreString.c_str()); //converts C++ strings into C-style strings, creating a character array (char*) with the same data
-       screen->Print(scoreCStr, 400, 40, 0xFFFFFFF, 1);
+       screen->PrintScaled(scoreCStr, 340, 30, 3, 3, 0xFFFFFFF); 
+
     }
 
     void Game::ShowFinalScore(Surface* screen)
     {
-       std::string scoreString = "SCORE: " + std::to_string(player->getScore());
+       std::string scoreString = "FINAL SCORE: " + std::to_string(player->getScore());
        char* scoreCStr = const_cast<char*>(scoreString.c_str()); //converts C++ strings into C-style strings, creating a character array (char*) with the same data
-       screen->Print(scoreCStr, 400, 500, 0xFFFFFFF, 1);
+       screen->PrintScaled(scoreCStr, 290, 200, 3, 3, 0xFF0000);
+
     }
 }

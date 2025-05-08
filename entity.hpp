@@ -28,7 +28,7 @@ public:
 		Tmpl8::Surface* screen);
 
 	//collision avoidance
-	const float MAX_SPEED = 100.0f;
+	float maxSpeed = 100.0f;
 	const float SEE_AHEAD = 64.0f * 2.5f;
 	const float MAX_FORCE = 10.0f;
 	const float AVOID_FORCE = 20.0f;
