@@ -29,11 +29,13 @@ public:
 
 	//collision avoidance
 	float maxSpeed = 100.0f;
-	const float SEE_AHEAD = 64.0f * 2.5f;
-	const float MAX_FORCE = 10.0f;
-	const float AVOID_FORCE = 20.0f;
-	Tmpl8::vec2 Entity::CalculateAvoidance(std::vector<Rectangle>& obstacles, Tmpl8::Surface* screen, bool& isAvoiding);
+	const float SEE_AHEAD = 140.0f;
+	const float MAX_FORCE = 80.0f;
+	const float AVOID_FORCE = 100.0f;
+	Tmpl8::vec2 Entity::CalculateAvoidance(std::vector<Rectangle>& obstacles, Tmpl8::Surface* screen);
 	bool Entity::LineIntersectsRectangle(const Tmpl8::vec2& start, const Tmpl8::vec2& end, const Rectangle& rect, Tmpl8::Surface* screen);
+	bool Entity::LineLineIntersection(Tmpl8::vec2 a1, Tmpl8::vec2 a2, Tmpl8::vec2 b1, Tmpl8::vec2 b2, Tmpl8::Surface* screen);
+	
 
 	//main functions
 	void Draw(Tmpl8::Surface* screen, float deltaTime);
@@ -52,6 +54,8 @@ public:
 	bool isDying() { return dying; }
 	bool getInvincible() { return isInvincible; }
 	std::shared_ptr<Tmpl8::Sprite> getIdle() const { return idle; }
+	bool hasPlayedDeathSound() { return playedDeathSound; }
+	void setPlayedDeathSound(bool value) { playedDeathSound = value; }
 	
 	//hitboxes
 	bool drawHitboxes = { false };
@@ -85,6 +89,7 @@ protected:
 	float scaleFactor = 2.5f;
 
 	//enemy
+	bool playedDeathSound = false;
 	bool aiControlled;
 	bool dying = false;
 	bool returnToPool = false;

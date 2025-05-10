@@ -7,6 +7,8 @@
 #include "enemy.hpp"
 #include "item.hpp"
 
+
+
 #include <cassert>
 #include <SDL.h>
 #include <iostream>
@@ -108,6 +110,7 @@ namespace Tmpl8
         screen->Clear(0);
         deltaTime = Min(deltaTime, 33.33333333f);
         deltaTime *= 0.001f;
+        bgMusic.play();
 
 		spawnTimer += deltaTime;
 		if (spawnDelay >= minSpawnDelay)
@@ -161,7 +164,13 @@ namespace Tmpl8
 
                     if (enemy->isDying() == true)
                     {
-						enemy->SetIdle(enemy->deathSprite);
+                        if (!enemy->hasPlayedDeathSound())
+                        {
+                            explosion.play();
+                            enemy->setPlayedDeathSound(true);
+                        }
+
+                        enemy->SetIdle(enemy->deathSprite);
                         enemy->Draw(screen, deltaTime);
                         ++i;
                         continue;
@@ -180,6 +189,7 @@ namespace Tmpl8
                                     player->takeDamage(1);
                                     player->decreaseScore();
                                     player->makeInvincible();
+                                    hurt.play();
                                     return;
                                 }
 								if (player->getHearts() <= 0)
@@ -195,6 +205,7 @@ namespace Tmpl8
                     else if (enemy->readytoPool())
                     {
                         enemypool.returnEnemy(std::static_pointer_cast<Enemy>(enemy));
+                        enemy->setPlayedDeathSound(false);
                         activeEnemies.erase(activeEnemies.begin() + i);
                     }
                     else
@@ -288,6 +299,11 @@ namespace Tmpl8
         {
             if (collide(player->GetHitbox(), item->getHitbox()))
             {
+                if (!player->boolCollected())
+                {
+                    powerUp.play();
+                }
+
                 if (item->getType() == Item::Type::HEART)
                 {
                     player->increaseHearts(1);
@@ -358,6 +374,8 @@ namespace Tmpl8
 	{
         screen->Clear(0);
         HandleInput(deltaTime);
+        bgMusic.stop();
+        death.play();
 
 		int gameOverWidth = (gameOver->GetWidth() * scaleFactor);
 		int gameOverHeight = (gameOver->GetHeight() * scaleFactor);

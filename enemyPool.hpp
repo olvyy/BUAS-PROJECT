@@ -21,7 +21,7 @@ public:
 	{
 		if (pool.empty())
 		{
-			std::cout << "pool empty, making new object..." << std::endl;
+			//std::cout << "pool empty, making new object..." << std::endl;
 			// still create with valid sprite:
 			return std::make_shared<Enemy>(Tmpl8::vec2(0, 0), idleEnemy);
 		}
@@ -29,7 +29,7 @@ public:
 		{
 			std::shared_ptr<Enemy> enemy = pool.back();
 			pool.pop_back();
-			std::cout << "enemy taken from pool" << std::endl;
+			//std::cout << "enemy taken from pool" << std::endl;
 			return enemy;
 		}
 	}
@@ -42,7 +42,7 @@ public:
 		}
 		else
 		{
-			std::cout << "pool full" << std::endl;
+			//std::cout << "pool full" << std::endl;
 		}
 	}
 

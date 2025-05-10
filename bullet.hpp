@@ -24,7 +24,6 @@ public:
 
 		position += velocity * deltaTime;
 
-		// Optional: Deactivate if bullet goes off screen
 		if (position.x < 80 + size.x || position.x > 720 - size.x|| position.y < 80 + size.y || position.y > 720 - size.y)
 		{
 			Deactivate();

@@ -12,5 +12,5 @@ struct Line
 	Line(const Tmpl8::vec2& c_base, const Tmpl8::vec2& c_direction)
 		: base(c_base), direciton(c_direction) {}
 
-	bool LineRectangleCollision(Line l, Rectangle r);
+	bool LineLineIntersection(Tmpl8::vec2 a1, Tmpl8::vec2 a2, Tmpl8::vec2 b1, Tmpl8::vec2 b2);
 };

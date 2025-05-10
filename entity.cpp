@@ -4,9 +4,6 @@
 #include "SDL.h"
 #include <cmath>
 
-//seek and avoid behaviour inspired by: https://code.tutsplus.com/understanding-steering-behaviors-collision-avoidance--gamedev-7777t
-// and https://code.tutsplus.com/understanding-steering-behaviors-seek--gamedev-849t
-
 Entity::Entity( const Tmpl8::vec2& c_origin, 
 				std::shared_ptr<Tmpl8::Sprite> c_idle, 
 				std::shared_ptr<Tmpl8::Sprite> c_moveDown, 
@@ -58,36 +55,25 @@ void Entity::Update(float deltaTime,
 				dying = false;
 				deathCurrentFrame = 0;
 				DeathAnimationTimer = 0.0f;
-
 				returnToPool = true;
 			}
 
 			return;
 		}
 
-		bool isAvoiding = false;
-		Tmpl8::vec2 avoidForce = CalculateAvoidance(tiles6, screen, isAvoiding);
+		Tmpl8::vec2 steering = { 0, 0 };
+		Tmpl8::vec2 seek = Tmpl8::vec2::normalize(player->position - position) * maxSpeed;
+		Tmpl8::vec2 avoidance = CalculateAvoidance(tiles6, screen);
 
-		// Always calculate seek force
-		Tmpl8::vec2 seekForce = (player->position - position).normalized() * maxSpeed;
+		float avoidanceWeight = 0.9f;
+		float seekingWeight = 1.0f - avoidanceWeight;
 
-		// Blend forces dynamically
-		Tmpl8::vec2 steering;
-		if (isAvoiding)
-		{
-			// Prioritize avoidance but still curve toward the player
-			steering = (avoidForce * 0.8f) + (seekForce * 0.3f);
-		}
-		else
-		{
-			// No avoidance needed, fully seek the player
-			steering = seekForce;
-		}
+		steering = avoidance * avoidanceWeight + seek * seekingWeight;
 
-		// Update velocity and clamp to max speed
-		velocity = velocity.Truncate(velocity + steering, maxSpeed);
+		steering = steering.Truncate(MAX_FORCE);
 
-		//screen->Line(position.x, position.y, velocity.x + position.x, velocity.y + position.y, 0xff0000);
+		velocity = velocity + steering;
+		velocity = velocity.Truncate(MAX_FORCE);
 	}
 
 	//player
@@ -153,7 +139,7 @@ void Entity::Update(float deltaTime,
 	//collisions
 	{
 		Tmpl8::vec2 newPosition = position + velocity * deltaTime;
-		Rectangle newHitbox(newPosition, hitbox.size);
+		Rectangle newHitbox(newPosition, hitbox.size - 5); //-5 to make the collision check less harsh and avoid getting stuck on walls
 
 
 		for (const auto& otherEnemy : enemies)
@@ -162,8 +148,8 @@ void Entity::Update(float deltaTime,
 			{
 				if (collide(newHitbox, otherEnemy->GetHitbox()))
 				{
-					isColliding = true;
-					velocity = 0;
+					Tmpl8::vec2 repulsion = (position - otherEnemy->getPosition()).normalized() * AVOID_FORCE;
+					velocity += repulsion;
 					return;
 				}
 			}
@@ -190,68 +176,77 @@ void Entity::Update(float deltaTime,
 }
 
 /////////////////////////////////////////////////
-/////			COLLISION AVOIDANCE		////////
+/////				DRAWING				////////
 ///////////////////////////////////////////////
 
-Tmpl8::vec2 Entity::CalculateAvoidance(std::vector<Rectangle>& obstacles, Tmpl8::Surface* screen, bool& isAvoiding)
+Tmpl8::vec2 Entity::CalculateAvoidance(std::vector<Rectangle>& obstacles, Tmpl8::Surface* screen)
 {
-	Tmpl8::vec2 enemyCenter = { position.x + hitbox.size.x / 2,
-								position.y + hitbox.size.y / 2 };
+	Tmpl8::vec2 positionCenter = position + hitbox.size * 0.5f;
 
-	Tmpl8::vec2 direction = velocity.length() > 0 ? velocity.normalized() : Tmpl8::vec2(0, 0);
-
-	Tmpl8::vec2 ahead = enemyCenter + direction * SEE_AHEAD;
-	Tmpl8::vec2 ahead2 = enemyCenter + direction * (SEE_AHEAD * 0.5f);
-
-	screen->Line(enemyCenter.x, enemyCenter.y, ahead.x, ahead.y, 0x000000);
+	Tmpl8::vec2 ahead = positionCenter + Tmpl8::vec2::normalize(velocity) * SEE_AHEAD;
+	screen->Line(positionCenter.x, positionCenter.y, ahead.x, ahead.y, 0xFF0000);
 
 	Rectangle* mostThreatening = nullptr;
-	isAvoiding = false;
+	Tmpl8::vec2 avoidance = { 0, 0 };
 
-	for (const auto& obstacle : obstacles)
+	// Find the most threatening obstacle
+	for (auto& obstacle : obstacles)
 	{
-		if (LineIntersectsRectangle(enemyCenter, ahead, obstacle, screen) ||
-			LineIntersectsRectangle(enemyCenter, ahead2, obstacle, screen))
+		if (LineIntersectsRectangle(positionCenter, ahead, obstacle, screen))
 		{
-			if (!mostThreatening || Tmpl8::vec2::distance(enemyCenter, obstacle.Center()) <
-				Tmpl8::vec2::distance(enemyCenter, mostThreatening->Center()))
+			if (!mostThreatening || (obstacle.Center() - positionCenter).length() < (mostThreatening->Center() - positionCenter).length())
 			{
-				mostThreatening = const_cast<Rectangle*>(&obstacle);
+				mostThreatening = &obstacle;
+				screen->Box(obstacle.origin.x, obstacle.origin.y,
+					obstacle.origin.x + obstacle.size.x,
+					obstacle.origin.y + obstacle.size.y, 0xFF0000);
 			}
 		}
 	}
 
 	if (mostThreatening)
 	{
-		isAvoiding = true;
-		Tmpl8::vec2 center = { mostThreatening->origin.x + mostThreatening->size.x / 2,
-							   mostThreatening->origin.y + mostThreatening->size.y / 2 };
+		avoidance = Tmpl8::vec2::normalize(positionCenter - mostThreatening->Center()) * AVOID_FORCE;
 
-		Tmpl8::vec2 avoidance = (enemyCenter - center).normalized() * AVOID_FORCE;
-		screen->Line(center.x, center.y, center.x + avoidance.x, center.y + avoidance.y, 0xffffff);
-
-		screen->Box(mostThreatening->origin.x, mostThreatening->origin.y,
-			mostThreatening->size.x + mostThreatening->origin.x,
-			mostThreatening->size.y + mostThreatening->origin.y, 0x00FF00);
-
-		return avoidance;
+		screen->Line(mostThreatening->Center().x, mostThreatening->Center().y,
+			mostThreatening->Center().x + avoidance.x,
+			mostThreatening->Center().y + avoidance.y, 0x00FF00);
 	}
 
-	return { 0, 0 };
+	return avoidance;
 }
 
 bool Entity::LineIntersectsRectangle(const Tmpl8::vec2& start, const Tmpl8::vec2& end, const Rectangle& rect, Tmpl8::Surface* screen)
 {
-	Line line;
-	line.base = start;
-	line.direciton = end - start;
-	//screen->Line(line.base.x, line.base.y, line.direciton.x + line.base.x, line.direciton.y + line.base.y, 0x0000FF);
-	return line.LineRectangleCollision(line, rect);
+	Tmpl8::vec2 topLeft = rect.origin;
+	Tmpl8::vec2 topRight = { rect.origin.x + rect.size.x, rect.origin.y };
+	Tmpl8::vec2 bottomLeft = { rect.origin.x, rect.origin.y + rect.size.y };
+	Tmpl8::vec2 bottomRight = rect.origin + rect.size;
+
+
+	return	LineLineIntersection(start, end, topLeft, topRight, screen) ||
+			LineLineIntersection(start, end, topRight, bottomRight, screen) ||
+			LineLineIntersection(start, end, bottomRight, bottomLeft, screen) ||
+			LineLineIntersection(start, end, bottomLeft, topLeft, screen);
 }
 
-/////////////////////////////////////////////////
-/////				DRAWING				////////
-///////////////////////////////////////////////
+bool Entity::LineLineIntersection(Tmpl8::vec2 a1, Tmpl8::vec2 a2, Tmpl8::vec2 b1, Tmpl8::vec2 b2, Tmpl8::Surface* screen)
+{
+	Tmpl8::vec2 s1 = a2 - a1; // Direction of line 1
+	Tmpl8::vec2 s2 = b2 - b1; // Direction of line 2
+
+	float denominator = (-s2.x * s1.y + s1.x * s2.y);
+	if (denominator == 0)
+	{
+		return false; // Lines are parallel
+	}
+
+	float s = (-s1.y * (a1.x - b1.x) + s1.x * (a1.y - b1.y)) / denominator;
+	float t = (s2.x * (a1.y - b1.y) - s2.y * (a1.x - b1.x)) / denominator;
+
+
+	return (s >= 0 && s <= 1 && t >= 0 && t <= 1);
+}
 
 void Entity::Draw(Tmpl8::Surface* screen, float deltaTime)
 {

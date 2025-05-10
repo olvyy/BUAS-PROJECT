@@ -18,5 +18,6 @@ public:
 
 protected:
 	bool active = false;
+	bool isAvoiding = false;
 	
 };

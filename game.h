@@ -8,6 +8,7 @@
 #include "enemyPool.hpp"
 #include "bulletPool.hpp"
 #include "itemPool.hpp"
+#include <Audio/Sound.hpp>
 
 namespace Tmpl8 {
 
@@ -80,8 +81,6 @@ public:
 
 	void HandleInput(float deltaTime);
 
-	void shootInAllDirections(float deltaTime);
-
 protected:
 	//game state
     GameState currentState = { MENU };   
@@ -107,6 +106,13 @@ protected:
 	Tmpl8::vec2 direction = { 0,0 };
 	std::shared_ptr<Tmpl8::Sprite> heartSprite;
 	std::shared_ptr<Tmpl8::Sprite> lastTry;
+
+	//audio
+	Audio::Sound explosion{ "assets/explosion.wav" };
+	Audio::Sound hurt{ "assets/hurt.wav" };
+	Audio::Sound powerUp{ "assets/powerUp.wav" };
+	Audio::Sound death{ "assets/death.wav" };
+	Audio::Sound bgMusic{ "assets/bgMusic.mp3", Audio::Sound::Type::Stream };
 
 	//item
 	std::vector<std::shared_ptr<Tmpl8::Sprite>> itemSprites;
@@ -143,7 +149,7 @@ protected:
 	std::vector<std::shared_ptr<Entity>> activeEntities;
 	std::vector<std::shared_ptr<Entity>> activeEnemies;
 	std::vector<Rectangle> enemyHitboxes;
-	objectPool enemypool = { 10 };
+	objectPool enemypool = { 2 };
 	float spawnDelay = 1.5f;
 	const float minSpawnDelay = 0.3f;
 	float spawnTimer = 0.0f;
