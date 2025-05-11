@@ -166,7 +166,15 @@ void Entity::Update(float deltaTime,
 		{
 			if (collide(newHitbox, tile))
 			{
-				velocity = 0;
+				if (aiControlled)
+				{
+					Tmpl8::vec2 repulsion = (position - tile.Center()).normalized() * AVOID_FORCE;
+					velocity += repulsion;
+				}
+				else
+				{
+					velocity = {0,0};
+				}
 				return;
 			}
 		}
@@ -184,7 +192,7 @@ Tmpl8::vec2 Entity::CalculateAvoidance(std::vector<Rectangle>& obstacles, Tmpl8:
 	Tmpl8::vec2 positionCenter = position + hitbox.size * 0.5f;
 
 	Tmpl8::vec2 ahead = positionCenter + Tmpl8::vec2::normalize(velocity) * SEE_AHEAD;
-	screen->Line(positionCenter.x, positionCenter.y, ahead.x, ahead.y, 0xFF0000);
+	/*screen->Line(positionCenter.x, positionCenter.y, ahead.x, ahead.y, 0xFF0000);*/
 
 	Rectangle* mostThreatening = nullptr;
 	Tmpl8::vec2 avoidance = { 0, 0 };
@@ -197,20 +205,20 @@ Tmpl8::vec2 Entity::CalculateAvoidance(std::vector<Rectangle>& obstacles, Tmpl8:
 			if (!mostThreatening || (obstacle.Center() - positionCenter).length() < (mostThreatening->Center() - positionCenter).length())
 			{
 				mostThreatening = &obstacle;
-				screen->Box(obstacle.origin.x, obstacle.origin.y,
+				/*screen->Box(obstacle.origin.x, obstacle.origin.y,
 					obstacle.origin.x + obstacle.size.x,
-					obstacle.origin.y + obstacle.size.y, 0xFF0000);
+					obstacle.origin.y + obstacle.size.y, 0xFF0000);*/
 			}
 		}
 	}
 
 	if (mostThreatening)
 	{
-		avoidance = Tmpl8::vec2::normalize(positionCenter - mostThreatening->Center()) * AVOID_FORCE;
+		avoidance = Tmpl8::vec2::normalize(ahead - mostThreatening->Center()) * AVOID_FORCE;
 
-		screen->Line(mostThreatening->Center().x, mostThreatening->Center().y,
+		/*screen->Line(mostThreatening->Center().x, mostThreatening->Center().y,
 			mostThreatening->Center().x + avoidance.x,
-			mostThreatening->Center().y + avoidance.y, 0x00FF00);
+			mostThreatening->Center().y + avoidance.y, 0x00FF00);*/
 	}
 
 	return avoidance;

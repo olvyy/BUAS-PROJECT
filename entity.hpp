@@ -31,7 +31,7 @@ public:
 	float maxSpeed = 100.0f;
 	const float SEE_AHEAD = 140.0f;
 	const float MAX_FORCE = 80.0f;
-	const float AVOID_FORCE = 100.0f;
+	const float AVOID_FORCE = 150.0f;
 	Tmpl8::vec2 Entity::CalculateAvoidance(std::vector<Rectangle>& obstacles, Tmpl8::Surface* screen);
 	bool Entity::LineIntersectsRectangle(const Tmpl8::vec2& start, const Tmpl8::vec2& end, const Rectangle& rect, Tmpl8::Surface* screen);
 	bool Entity::LineLineIntersection(Tmpl8::vec2 a1, Tmpl8::vec2 a2, Tmpl8::vec2 b1, Tmpl8::vec2 b2, Tmpl8::Surface* screen);

@@ -336,6 +336,7 @@ namespace Tmpl8
         for (auto& enemy : activeEnemies)
         {
             std::static_pointer_cast<Enemy>(enemy)->deactivate();
+			enemyHitboxes.clear();
 			enemypool.returnEnemy(std::static_pointer_cast<Enemy>(enemy));
         }
         activeEnemies.clear();
@@ -360,10 +361,14 @@ namespace Tmpl8
         player->resetSpeed();
 		allDirectionalShooting = false;
 		bulletCooldown = 0.2f;
+        player->setScore(0);
+
+		bgMusic.replay();
 
         effectTimer = 0.0f;
         bulletTimer = 0.0f;
         spawnTimer = 0.0f;
+		hasPlayedDeathSound = false;
 
 		vec2 resetPosition(screenCenterX, screenCenterY);
         player->setPosition(resetPosition);
@@ -375,7 +380,12 @@ namespace Tmpl8
         screen->Clear(0);
         HandleInput(deltaTime);
         bgMusic.stop();
-        death.play();
+
+		if (hasPlayedDeathSound == false)
+		{
+			death.play();
+			hasPlayedDeathSound = true;
+		}
 
 		int gameOverWidth = (gameOver->GetWidth() * scaleFactor);
 		int gameOverHeight = (gameOver->GetHeight() * scaleFactor);
@@ -573,7 +583,7 @@ namespace Tmpl8
     {
        std::string scoreString = "FINAL SCORE: " + std::to_string(player->getScore());
        char* scoreCStr = const_cast<char*>(scoreString.c_str()); //converts C++ strings into C-style strings, creating a character array (char*) with the same data
-       screen->PrintScaled(scoreCStr, 290, 200, 3, 3, 0xFF0000);
+       screen->Centre(scoreCStr, 200, 3, 3, 0xFF0000);
 
     }
 }

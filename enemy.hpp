@@ -12,7 +12,7 @@ public:
 	void makeActive();
 	void Die();
 	void isDying() { dying = true; }
-	void deactivate() { active = false; }
+	void deactivate() { active = false; dying = false; }
 	bool isActive() const;
 	void SetPosition(const Tmpl8::vec2& newPos);
 

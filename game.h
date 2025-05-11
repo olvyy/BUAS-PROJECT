@@ -91,6 +91,7 @@ protected:
 	Surface* tryAgainDark;
 	Surface* quitLight;
 	Surface* quitDark;
+	bool hasPlayedDeathSound = false;
 
 	//game
 	Surface* screen;
@@ -149,8 +150,8 @@ protected:
 	std::vector<std::shared_ptr<Entity>> activeEntities;
 	std::vector<std::shared_ptr<Entity>> activeEnemies;
 	std::vector<Rectangle> enemyHitboxes;
-	objectPool enemypool = { 2 };
-	float spawnDelay = 1.5f;
+	objectPool enemypool = { 10 };
+	float spawnDelay = 2.0f;
 	const float minSpawnDelay = 0.3f;
 	float spawnTimer = 0.0f;
 

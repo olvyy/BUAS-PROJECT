@@ -33,6 +33,7 @@ public:
 		}
 	}
 	int getScore() { return currentScore; }
+	void setScore(int score) { currentScore = score; }
 	void takeDamage(int damage);
 	void increaseHearts(int amount) { currentHearts += amount; }
 	void drawHearts(Tmpl8::Surface* screen, std::shared_ptr<Tmpl8::Sprite> heartSprite, std::shared_ptr<Tmpl8::Sprite> lastTry, float deltaTime);
