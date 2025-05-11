@@ -11,4 +11,6 @@ Try your best to survive as long as possible!
 
 Power ups trigger automatically after pick up and do not stack.
 
-![enemy1](https://github.com/user-attachments/assets/f7d87efe-6654-4a19-8696-e7d965e27f8e)
+![IMG_1324](https://github.com/user-attachments/assets/a4b7c18a-e253-4ec8-bdf9-7ce030256c6a)
+
+
