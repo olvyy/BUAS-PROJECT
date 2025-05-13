@@ -93,6 +93,8 @@ public:
 	void operator *= ( const vec2& a ) { x *= a.x; y *= a.y; }
 	void operator *= ( float a ) { x *= a; y *= a; }
 	float& operator [] ( const int idx ) { return cell[idx]; }
+	bool operator == (const vec2& a) const { return x == a.x && y == a.y; }
+	bool operator != (const vec2& a) const { return !(*this == a); }
 	float length() { return sqrtf( x * x + y * y ); }
 	float sqrLentgh() { return x * x + y * y; }
 	vec2 normalized()

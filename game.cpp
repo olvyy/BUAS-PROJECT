@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <set>
 
 
 //global variables
@@ -115,7 +116,7 @@ namespace Tmpl8
 		spawnTimer += deltaTime;
 		if (spawnDelay >= minSpawnDelay)
 		{
-			spawnDelay -= deltaTime * 0.01f;
+			spawnDelay -= deltaTime * 0.05f;
 			//std::cout << spawnDelay << std::endl;
 		}
 
@@ -139,18 +140,26 @@ namespace Tmpl8
         {
             if (spawnTimer >= spawnDelay)
             {
-                spawnTimer = 0.0f;
+                spawnTimer = 0.0f;  
+                Tmpl8::vec2 lastSpawnPos;
 
-                if (!enemypool.returnVector().empty())
-                {
-                    auto enemy = enemypool.getEnemy();
+                if (!enemypool.returnVector().empty())  
+                {  
+                    auto enemy = enemypool.getEnemy();  
+                    Tmpl8::vec2 spawnPos;
 
-                    Tmpl8::vec2 spawnPos = spawnTiles[rand() % spawnTiles.size()];
-                    enemy->makeActive();
+                    while ((spawnPos == lastSpawnPos))
+                    {
+                        spawnPos = spawnTiles[rand() % spawnTiles.size()];
+                    }
+
+                    lastSpawnPos = spawnPos;
                     enemy->setPosition(spawnPos);
-                    enemyHitboxes.push_back(enemy->GetHitbox());
-                    activeEnemies.push_back(enemy);
-                    return;
+
+                    enemy->makeActive();  
+                    enemyHitboxes.push_back(enemy->GetHitbox());  
+                    activeEnemies.push_back(enemy);  
+                    return;  
                 }
             }
 
@@ -295,8 +304,10 @@ namespace Tmpl8
 			if (!activeItems.empty()) item->Draw(screen, item->getSprite());
         }
 
-        for (auto& item : activeItems)
+        for (int i = 0; i < activeItems.size();)
         {
+            auto& item = activeItems[i];
+
             if (collide(player->GetHitbox(), item->getHitbox()))
             {
                 if (!player->boolCollected())
@@ -309,7 +320,8 @@ namespace Tmpl8
                     player->increaseHearts(1);
                     item->Deactivate();
                     items.returnItem(item);
-                    activeItems.erase(activeItems.begin());
+                    activeItems.erase(activeItems.begin() + i);
+                    continue;
                 }
                 else if (!player->boolCollected())
                 {
@@ -322,7 +334,10 @@ namespace Tmpl8
                     screen->Centre("ITEM IN USE", 400, 3, 3, 0xFF0000);
                 }
             }
+
+            i++;
         }
+
 
         //std::cout << player->getVelocity().x << std::endl;
         //std::cout << player->getVelocity().y << std::endl;

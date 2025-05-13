@@ -150,7 +150,6 @@ void Entity::Update(float deltaTime,
 				{
 					Tmpl8::vec2 repulsion = (position - otherEnemy->getPosition()).normalized() * AVOID_FORCE;
 					velocity += repulsion;
-					return;
 				}
 			}
 		}
@@ -314,3 +313,4 @@ void Entity::updateAnimation(float deltaTime)
 	newHeight = static_cast<int>(currentSprite->GetHeight() * scaleFactor);
 
 }
+

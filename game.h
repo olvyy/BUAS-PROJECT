@@ -152,7 +152,7 @@ protected:
 	std::vector<Rectangle> enemyHitboxes;
 	objectPool enemypool = { 10 };
 	float spawnDelay = 2.0f;
-	const float minSpawnDelay = 0.3f;
+	const float minSpawnDelay = 0.5f;
 	float spawnTimer = 0.0f;
 
 	std::vector<Tmpl8::vec2> spawnTiles =
