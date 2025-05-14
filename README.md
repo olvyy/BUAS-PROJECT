@@ -4,7 +4,7 @@ is a Journey of the Prairie King (Stardew Valley) inspired arcade style shooter.
 Try your best to survive as long as possible!
 
 
-========================================================================================|
+==================================================|
 **CONTROLS:**
 
 **WASD** - move 
@@ -18,7 +18,7 @@ Try your best to survive as long as possible!
 **Escape** - quit
 
 Power ups trigger automatically after pick up and do not stack.
-=========================================================================================|
+==================================================|
 
 
 
