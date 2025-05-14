@@ -1,13 +1,15 @@
-# OGRES  
+#  ![ogres](https://github.com/user-attachments/assets/578372d7-d3e9-45e5-ad3d-153a6ed92998) OGRES
+
 is a Journey of the Prairie King (Stardew Valley) inspired arcade style shooter.
 Try your best to survive as long as possible!
 
-==============================================================================================================|
+
+========================================================================================|
 **CONTROLS:**
 
 **WASD** - move 
 
-**Arrow Keys (hold)** - Shoot
+**ARROW KEYS (HOLD)** - Shoot
 
 **R** - restart game
 
@@ -16,7 +18,9 @@ Try your best to survive as long as possible!
 **Escape** - quit
 
 Power ups trigger automatically after pick up and do not stack.
-==============================================================================================================|
+=========================================================================================|
+
+
 
 Made using the BUas template as an intake assignement for the Game Programming course.
 
@@ -28,7 +32,6 @@ Background music from: https://www.fesliyanstudios.com/royalty-free-music/downlo
 
 Art from: https://www.spriters-resource.com/pc_computer/stardewvalley/sheet/82481/
 
-![IMG_1325](https://github.com/user-attachments/assets/d06b30d6-155a-4b2a-a6ff-4ecd8b85bfd7) 
 
 
 
