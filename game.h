@@ -155,7 +155,7 @@ protected:
 	std::vector<Rectangle> enemyHitboxes;
 	objectPool enemypool;
 	float spawnDelay = 2.0f;
-	const float minSpawnDelay = 0.3f;
+	const float minSpawnDelay = 0.7f;
 	float spawnTimer = 0.0f;
 	void handleSpawnDelay(float deltaTime);
 	void spawnEnemies();

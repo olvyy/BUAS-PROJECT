@@ -518,7 +518,7 @@ namespace Tmpl8
         if (spawnTimer >= spawnDelay)
         {
             spawnTimer = 0.0f;
-            Tmpl8::vec2 lastSpawnPos;
+            Tmpl8::vec2 lastSpawnPos = { 0,0 };
 
             if (!enemypool.returnVector().empty())
             {
