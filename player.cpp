@@ -12,6 +12,25 @@ Player::Player(
 )
 	: Entity(c_origin, c_idle, c_moveDown, c_moveUp, c_moveLeft, c_moveRight) {}
 
+int Player::increaseScore()
+{
+	currentScore += 10;
+	return currentScore;
+}
+
+int Player::decreaseScore()
+{
+	currentScore -= 20;
+	if (currentScore < 0)
+	{
+		currentScore = 0;
+	}
+	else
+	{
+		return currentScore;
+	}
+}
+
 void Player::takeDamage(int damage)
 {
 	currentHearts -= damage;

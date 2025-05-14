@@ -20,14 +20,12 @@ public:
 	{
 		if (bullets.empty())
 		{
-			//std::cout << "Pool empty, creating new bullet..." << std::endl;
 			return std::make_shared<bullet>(bulletSprite);
 		}
 		else
 		{
 			auto bullet = bullets.back();
 			bullets.pop_back();
-			//std::cout << "Bullet taken from pool" << std::endl;
 			return bullet;
 		}
 	}
@@ -40,7 +38,7 @@ public:
 		}
 		else
 		{
-			//std::cout << "Pool full, bullet discarded" << std::endl;
+			std::cout << "Pool full, bullet discarded" << std::endl;
 		}
 	}
 

@@ -5,7 +5,6 @@
 class Player : public Entity
 {
 public:
-	//constructor
 	Player( const Tmpl8::vec2& c_origin,
 			std::shared_ptr<Tmpl8::Sprite> c_idle,
 			std::shared_ptr<Tmpl8::Sprite> c_moveDown,
@@ -15,23 +14,8 @@ public:
 		  );
 
 	int getHearts() { return currentHearts; }
-	int increaseScore() 
-	{ 
-		currentScore+=10;
-		return currentScore;
-	}
-	int decreaseScore()
-	{
-		currentScore -= 20;
-		if (currentScore < 0)
-		{
-			currentScore = 0;
-		}
-		else
-		{
-			return currentScore;
-		}
-	}
+	int increaseScore();
+	int decreaseScore();
 	int getScore() { return currentScore; }
 	void setScore(int score) { currentScore = score; }
 	void takeDamage(int damage);
@@ -48,7 +32,7 @@ protected:
 	bool collected = false;
 	int maxHearts = 3;
 	int currentHearts = 3;
-	int scaleFactor = 3.5;
+	const float scaleFactor = 3.5;
 	int HeartsGap = 20;
 	int currentScore = 0;
 };

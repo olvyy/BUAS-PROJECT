@@ -26,10 +26,6 @@ Rectangle Entity::GetHitbox()
 	return hitbox;
 }
 
-/////////////////////////////////////////////////
-/////			MOVMENT & COLLISION		////////
-///////////////////////////////////////////////
-
 void Entity::Update(float deltaTime,
 	std::vector<Rectangle>& tiles,
 	std::vector<Rectangle>& tiles6,
@@ -37,7 +33,6 @@ void Entity::Update(float deltaTime,
 	std::shared_ptr<Entity>& player,
 	Tmpl8::Surface* screen)
 {
-	//enemies
 	if (aiControlled)
 	{
 		if (dying)
@@ -76,7 +71,6 @@ void Entity::Update(float deltaTime,
 		velocity = velocity.Truncate(MAX_FORCE);
 	}
 
-	//player
 	{
 		if (isInvincible)
 		{
@@ -102,25 +96,21 @@ void Entity::Update(float deltaTime,
 			{
 				velocity.y = -maxSpeed;
 				currentSprite = moveUp;
-				//std::cout << "player velocity: " << velocity.y << std::endl;
 			}
 			else if (movingDown)
 			{
 				velocity.y = +maxSpeed;
 				currentSprite = moveDown;
-				//std::cout << "player velocity: "<< velocity.y << std::endl;
 			}
 			if (movingLeft)
 			{
 				velocity.x = -maxSpeed;
 				currentSprite = moveLeft;
-				//std::cout << "player velocity: " << velocity.x << std::endl;
 			}
 			else if (movingRight)
 			{
 				velocity.x = +maxSpeed;
 				currentSprite = moveRight;
-				//std::cout << "player velocity: " << velocity.x << std::endl;
 			}
 			if (velocity.x == 0 && velocity.y == 0)
 			{
@@ -136,7 +126,6 @@ void Entity::Update(float deltaTime,
 		}
 	}
 	
-	//collisions
 	{
 		Tmpl8::vec2 newPosition = position + velocity * deltaTime;
 		Rectangle newHitbox(newPosition, hitbox.size - 5); //-5 to make the collision check less harsh and avoid getting stuck on walls
@@ -183,20 +172,20 @@ void Entity::Update(float deltaTime,
 }
 
 /////////////////////////////////////////////////
-/////				DRAWING				////////
+/////		COLLISION AVOIDANCE			////////
 ///////////////////////////////////////////////
+
+//made using https://code.tutsplus.com/understanding-steering-behaviors-collision-avoidance--gamedev-7777t
 
 Tmpl8::vec2 Entity::CalculateAvoidance(std::vector<Rectangle>& obstacles, Tmpl8::Surface* screen)
 {
 	Tmpl8::vec2 positionCenter = position + hitbox.size * 0.5f;
 
 	Tmpl8::vec2 ahead = positionCenter + Tmpl8::vec2::normalize(velocity) * SEE_AHEAD;
-	/*screen->Line(positionCenter.x, positionCenter.y, ahead.x, ahead.y, 0xFF0000);*/
 
 	Rectangle* mostThreatening = nullptr;
 	Tmpl8::vec2 avoidance = { 0, 0 };
 
-	// Find the most threatening obstacle
 	for (auto& obstacle : obstacles)
 	{
 		if (LineIntersectsRectangle(positionCenter, ahead, obstacle, screen))
@@ -204,9 +193,6 @@ Tmpl8::vec2 Entity::CalculateAvoidance(std::vector<Rectangle>& obstacles, Tmpl8:
 			if (!mostThreatening || (obstacle.Center() - positionCenter).length() < (mostThreatening->Center() - positionCenter).length())
 			{
 				mostThreatening = &obstacle;
-				/*screen->Box(obstacle.origin.x, obstacle.origin.y,
-					obstacle.origin.x + obstacle.size.x,
-					obstacle.origin.y + obstacle.size.y, 0xFF0000);*/
 			}
 		}
 	}
@@ -214,10 +200,6 @@ Tmpl8::vec2 Entity::CalculateAvoidance(std::vector<Rectangle>& obstacles, Tmpl8:
 	if (mostThreatening)
 	{
 		avoidance = Tmpl8::vec2::normalize(ahead - mostThreatening->Center()) * AVOID_FORCE;
-
-		/*screen->Line(mostThreatening->Center().x, mostThreatening->Center().y,
-			mostThreatening->Center().x + avoidance.x,
-			mostThreatening->Center().y + avoidance.y, 0x00FF00);*/
 	}
 
 	return avoidance;
@@ -257,12 +239,12 @@ bool Entity::LineLineIntersection(Tmpl8::vec2 a1, Tmpl8::vec2 a2, Tmpl8::vec2 b1
 
 void Entity::Draw(Tmpl8::Surface* screen, float deltaTime)
 {
-	//for hitboxes
 	const Uint8* keystates = SDL_GetKeyboardState(nullptr);
+	static bool hKeyPressed = false;
 
 	if (keystates[SDL_SCANCODE_H])
 	{
-		if (!hKeyPressed)
+		if(!hKeyPressed)
 		{
 			drawHitboxes = !drawHitboxes;
 			hKeyPressed = true;
@@ -292,7 +274,6 @@ void Entity::Draw(Tmpl8::Surface* screen, float deltaTime)
 	}
 
 	updateAnimation(deltaTime);
-
 }
 
 void Entity::updateAnimation(float deltaTime)
@@ -311,6 +292,5 @@ void Entity::updateAnimation(float deltaTime)
 
 	newWidth = static_cast<int>(currentSprite->GetWidth() * scaleFactor);
 	newHeight = static_cast<int>(currentSprite->GetHeight() * scaleFactor);
-
 }
 

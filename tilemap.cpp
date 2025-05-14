@@ -36,23 +36,6 @@ void GameMap::LoadMap(int arr[16][16])
 
 void GameMap::DrawMap(Tmpl8::Surface* screen, float scaleFactor, float deltaTime)
 {
-
-	// get the current keyboard state
-	const Uint8* keystates = SDL_GetKeyboardState(nullptr);
-
-	if (keystates[SDL_SCANCODE_H])
-	{
-		if (!hKeyPressed) // Only toggle if the key was not previously pressed
-		{
-			drawHitboxes = !drawHitboxes;
-			hKeyPressed = true;
-		}
-	}
-	else
-	{
-		hKeyPressed = false;
-	}
-
 	float mapWdith = 16 * tileSize * scaleFactor;
 	float mapHeight = 16 * tileSize * scaleFactor;
 
@@ -91,16 +74,10 @@ void GameMap::DrawMap(Tmpl8::Surface* screen, float scaleFactor, float deltaTime
 			case 4:
 				tile4->DrawScaled(static_cast<int>(dest.origin.x), static_cast<int>(dest.origin.y), static_cast<int>(dest.size.x), static_cast<int>(dest.size.y), screen);
 				break;
-
-				//Tiles 5&6 will have collision with entities
 			case 5:
 			{
 				tile5->DrawScaledAnimated(screen, static_cast<int>(dest.origin.x), static_cast<int>(dest.origin.y), static_cast<int>(dest.size.x), static_cast<int>(dest.size.y));
 				tileHitboxes.emplace_back(dest.origin, dest.size);
-				if (drawHitboxes)
-				{
-					DrawRectangle(tileHitboxes.back(), screen, 0x0000FF);
-				}
 				break;
 			}
 			case 6:
@@ -108,10 +85,6 @@ void GameMap::DrawMap(Tmpl8::Surface* screen, float scaleFactor, float deltaTime
 				tile6->DrawScaled(static_cast<int>(dest.origin.x), static_cast<int>(dest.origin.y), static_cast<int>(dest.size.x), static_cast<int>(dest.size.y), screen);
 				tileHitboxes.emplace_back(dest.origin, dest.size);
 				tileHitboxes6.emplace_back(dest.origin, dest.size);
-				if (drawHitboxes)
-				{
-					DrawRectangle(tileHitboxes.back(), screen, 0x0000FF);
-				}
 				break;
 			}
 			}
@@ -119,7 +92,7 @@ void GameMap::DrawMap(Tmpl8::Surface* screen, float scaleFactor, float deltaTime
 	}
 }
 
-void GameMap::UpdateTileAnimation(float deltaTime) //stealing this from my player class but adjusting it to tile 5 cause its the only animated tile
+void GameMap::UpdateTileAnimation(float deltaTime)
 {
 	tileAnimationTimer += deltaTime;
 

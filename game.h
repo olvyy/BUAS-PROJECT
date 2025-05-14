@@ -30,14 +30,16 @@ class Surface;
 class Game
 {
 public:
+	Game();
 
 	void SetTarget(Surface* surface) { screen = surface; }
-	void Init(); //initializer
-
+	void Init();
 	void Shutdown(float deltaTime);
 	void Tick( float deltaTime );
+
 	void UpdateMenu(float deltaTime);
 	void UpdateGame(float deltaTime);
+
 	bool shouldQuit = false;
 	void ResetGame();
 
@@ -66,11 +68,11 @@ public:
 				return true;
 			}
 		}
-
 		return false;
 	}
-	
+	void HandleInput(float deltaTime);
 
+	
 	void MouseUp(int button) { /* implement if you want to detect mouse button presses */ }
 	void MouseDown(int button) { /* implement if you want to detect mouse button presses */ }
 	void MouseMove(int x, int y) { /* implement if you want to detect mouse movement */ }
@@ -79,81 +81,85 @@ public:
 	void Game::KeyDown(int key) {} //dont need this because im updating player movement in HandleInput
 	void Game::KeyUp(int key) {}
 
-	void HandleInput(float deltaTime);
-
 protected:
-	//game state
+	//GAMESTATE
     GameState currentState = { MENU };   
 	GameOverOptions currentOption = { TRYAGAIN };
-	Surface* menu;
-	Surface* gameOver;
-	Surface* tryAgainLight;
-	Surface* tryAgainDark;
-	Surface* quitLight;
-	Surface* quitDark;
+	Surface* menu = nullptr;
+	Surface* gameOver = nullptr;
+	Surface* tryAgainLight = nullptr;
+	Surface* tryAgainDark = nullptr;
+	Surface* quitLight = nullptr;
+	Surface* quitDark = nullptr;
 	bool hasPlayedDeathSound = false;
-
-	//game
-	Surface* screen;
-	Surface* frame;
-	int scaleFactor = 5;
-	int screenCenterX = 400;
-	int screenCenterY = 400;
 	void UpdateScoreDisplay(Surface* screen);
 	void ShowFinalScore(Surface* screen);
 
-	//player
-	std::shared_ptr<Player> player;
+	//GAME
+	Surface* screen = nullptr;
+	Surface* frame = nullptr;
+	static constexpr int scaleFactor = 5;
+	static constexpr int screenCenterX = 400;
+	static constexpr int screenCenterY = 400;
+	
+	//PLAYER
+	std::shared_ptr<Player> player = nullptr;
 	Tmpl8::vec2 direction = { 0,0 };
-	std::shared_ptr<Tmpl8::Sprite> heartSprite;
-	std::shared_ptr<Tmpl8::Sprite> lastTry;
+	std::shared_ptr<Tmpl8::Sprite> heartSprite = nullptr;
+	std::shared_ptr<Tmpl8::Sprite> lastTry = nullptr;
 
-	//audio
+	//AUDIO
 	Audio::Sound explosion{ "assets/explosion.wav" };
 	Audio::Sound hurt{ "assets/hurt.wav" };
 	Audio::Sound powerUp{ "assets/powerUp.wav" };
 	Audio::Sound death{ "assets/death.wav" };
 	Audio::Sound bgMusic{ "assets/bgMusic.mp3", Audio::Sound::Type::Stream };
 
-	//item
+	//ITEMS
 	std::vector<std::shared_ptr<Tmpl8::Sprite>> itemSprites;
-	itemPool items = itemPool(10);
+	itemPool items;
 	std::vector<std::shared_ptr<Item>> activeItems;
-	std::shared_ptr<Item> ItemInUse;
+	std::shared_ptr<Item> ItemInUse = nullptr;
 	float effectTimer = 0.0f;
-	float effectDuration = 10.0f;
-		 
-	int dropChance = 20.0f;
+	const float effectDuration = 10.0f;
+	void handleItems(float deltaTime);
+	const float dropChance = 20.0f;
 	int GenerateRandomNumber100() 
 	{
 		return rand() % 100 + 1;
 	}
 		
-	//bullets
+	//BULLETS
+	void spawnBullets(float deltaTime);
+	void handleBulletEvents();
 	float bulletTimer = 0.0f;
 	float bulletCooldown = 0.2f;
 	bool allDirectionalShooting = false;
-	std::shared_ptr<Sprite> bulletSprite = std::make_shared<Sprite>(new Surface("assets/bullet.png"), 1);
+	std::shared_ptr<Sprite> bulletSprite = nullptr;
 	std::vector <std::shared_ptr<bullet>> activeBullets;
-	BulletPool bullets = BulletPool(30, bulletSprite);
+	BulletPool bullets;
 	std::vector<vec2> directions =
 	{
 		{0, -1}, {1, -1}, {1, 0}, {1, 1},
 		{0, 1}, {-1, 1}, {-1, 0}, {-1, -1}
 	};
 
-	//tilemap
+	//TILEMAP
 	std::vector<Rectangle> tileHitboxes; 
 	std::vector<Rectangle> tiles6;
 
-	//enemies
+	//ENEMIES
 	std::vector<std::shared_ptr<Entity>> activeEntities;
 	std::vector<std::shared_ptr<Entity>> activeEnemies;
+	std::shared_ptr<Tmpl8::Sprite> deathSprite = { nullptr };
 	std::vector<Rectangle> enemyHitboxes;
-	objectPool enemypool = { 10 };
+	objectPool enemypool;
 	float spawnDelay = 2.0f;
-	const float minSpawnDelay = 0.5f;
+	const float minSpawnDelay = 0.3f;
 	float spawnTimer = 0.0f;
+	void handleSpawnDelay(float deltaTime);
+	void spawnEnemies();
+	void handleEnemyEvents(float deltaTime);
 
 	std::vector<Tmpl8::vec2> spawnTiles =
 	{
@@ -170,8 +176,6 @@ protected:
 		{680, 320}, 
 		{80, 360}
 	};	
-
-	//score
 
 };
 
