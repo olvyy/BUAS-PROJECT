@@ -19,8 +19,8 @@ Try your best to survive as long as possible!
 **Escape** - quit
 
 Power ups trigger automatically after pick up and do not stack.
-==================================================|
 
+==================================================|
 
 
 Made using the BUas template as an intake assignement for the Game Programming course.
